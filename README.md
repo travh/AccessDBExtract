@@ -1,2 +1,2 @@
 # AccessDBExtract
-Scripts to extract data from multiple Access databases.
+Experimenting with scripts to extract data from multiple Access databases.
