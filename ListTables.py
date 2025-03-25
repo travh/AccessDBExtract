@@ -21,7 +21,7 @@ def list_tables_in_databases(db_folder):
     return db_tables
 
 # Example usage
-db_folder = 'C:\AccessTest'
+db_folder = 'C:\AccessTest\DB1'
 db_tables = list_tables_in_databases(db_folder)
 
 for db_file, tables in db_tables.items():
