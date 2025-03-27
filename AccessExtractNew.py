@@ -56,7 +56,9 @@ if not os.path.exists(output_folder):
 
 access_databases = find_access_databases(db_folder)
 
-for db_path in access_databases:
+total_databases = len(access_databases)
+for i, db_path in enumerate(access_databases):
+    print(f"Extracting from database {i + 1} of {total_databases}")
     db_folder_name = os.path.basename(os.path.dirname(db_path))
     table_names = get_table_names(db_path)
     for table_name in table_names:
