@@ -44,7 +44,7 @@ def find_access_databases(folder):
 
 # Example usage
 db_folder = 'C:\\AccessTest'
-sql_conn_str = 'mssql+pyodbc://your_username:your_password@your_server_name/your_database_name?driver=ODBC+Driver+17+for+SQL+Server'
+sql_conn_str = 'mssql+pyodbc://sa:Rats0und!@DESKTOP-VKMSDNG/AccessStaging?driver=ODBC+Driver+17+for+SQL+Server'
 
 access_databases = find_access_databases(db_folder)
 
