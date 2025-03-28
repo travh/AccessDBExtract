@@ -41,9 +41,15 @@ function Write-DataToSQL {
         [string]$tableName,
         [string]$sqlConnStr
     )
-    $bulkCopy = New-Object Data.SqlClient.SqlBulkCopy($sqlConnStr)
-    $bulkCopy.DestinationTableName = $tableName
-    $bulkCopy.WriteToServer($dataTable)
+    try {
+        $bulkCopy = New-Object Data.SqlClient.SqlBulkCopy($sqlConnStr)
+        $bulkCopy.DestinationTableName = $tableName
+        $bulkCopy.WriteToServer($dataTable)
+        Write-Output "Successfully wrote data to SQL Server table $tableName"
+    } catch {
+        Write-Output ("Error writing to SQL Server table {0}: {1}" -f $tableName, $_.Exception.Message)
+        throw
+    }
 }
 
 # Function to traverse directories and find all Access databases
@@ -69,6 +75,7 @@ for ($i = 0; $i -lt $totalDatabases; $i++) {
     $tableNames = Get-TableNames -dbPath $dbPath
     foreach ($tableName in $tableNames) {
         try {
+            Write-Output "Processing table $tableName in database $dbPath"
             $data = Get-DataFromAccess -dbPath $dbPath -tableName $tableName
             # Create a new DataTable with the additional DatabaseID column
             $newDataTable = New-Object System.Data.DataTable
