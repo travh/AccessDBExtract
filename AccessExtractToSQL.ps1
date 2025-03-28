@@ -71,7 +71,7 @@ for ($i = 0; $i -lt $totalDatabases; $i++) {
         try {
             $data = Get-DataFromAccess -dbPath $dbPath -tableName $tableName
             # Add the DatabaseID column with the folder name as its value
-            $data.Columns.Add("DatabaseID", [System.String]) | Out-Null
+            $data.Columns.Add("DatabaseID") | Out-Null
             foreach ($row in $data.Rows) {
                 $row["DatabaseID"] = $dbFolderName
             }
