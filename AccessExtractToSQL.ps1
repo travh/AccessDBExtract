@@ -16,8 +16,8 @@ function Get-TableNames {
     return $tableNames
 }
 
-# Function to extract data from a specific table in MS Access database
-function Extract-DataFromAccess {
+# Function to read data from a specific table in MS Access database
+function Get-DataFromAccess {
     param (
         [string]$dbPath,
         [string]$tableName
@@ -69,7 +69,7 @@ for ($i = 0; $i -lt $totalDatabases; $i++) {
     $tableNames = Get-TableNames -dbPath $dbPath
     foreach ($tableName in $tableNames) {
         try {
-            $data = Extract-DataFromAccess -dbPath $dbPath -tableName $tableName
+            $data = Get-DataFromAccess -dbPath $dbPath -tableName $tableName
             # Add the DatabaseID column with the folder name as its value
             $data.Columns.Add("DatabaseID", [System.String]) | Out-Null
             foreach ($row in $data.Rows) {
