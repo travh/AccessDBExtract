@@ -70,12 +70,18 @@ for ($i = 0; $i -lt $totalDatabases; $i++) {
     foreach ($tableName in $tableNames) {
         try {
             $data = Get-DataFromAccess -dbPath $dbPath -tableName $tableName
-            # Add the DatabaseID column with the folder name as its value
-            $data.Columns.Add("DatabaseID") | Out-Null
+            # Create a new DataTable with the additional DatabaseID column
+            $newDataTable = New-Object System.Data.DataTable
+            $data.Columns | ForEach-Object { $newDataTable.Columns.Add($_.ColumnName, $_.DataType) }
+            $newDataTable.Columns.Add("DatabaseID", [System.String])
+            # Copy data to the new DataTable
             foreach ($row in $data.Rows) {
-                $row["DatabaseID"] = $dbFolderName
+                $newRow = $newDataTable.NewRow()
+                $newRow.ItemArray = $row.ItemArray
+                $newRow["DatabaseID"] = $dbFolderName
+                $newDataTable.Rows.Add($newRow)
             }
-            Write-DataToSQL -dataTable $data -tableName $tableName -sqlConnStr $sqlConnStr
+            Write-DataToSQL -dataTable $newDataTable -tableName $tableName -sqlConnStr $sqlConnStr
         } catch {
             Write-Output ("Error processing table {0} in database {1}: {2}" -f $tableName, $dbPath, $_.Exception.Message)
         }
