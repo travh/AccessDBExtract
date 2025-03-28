@@ -1,3 +1,60 @@
+# Suppress specific UserWarning
+[System.Reflection.Assembly]::LoadWithPartialName("System.Data.Odbc") | Out-Null
+[System.Reflection.Assembly]::LoadWithPartialName("System.Data.SqlClient") | Out-Null
+
+# Function to get all table names from MS Access database
+function Get-TableNames {
+    param (
+        [string]$dbPath
+    )
+    $connStr = "Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=$dbPath"
+    $conn = New-Object System.Data.Odbc.OdbcConnection($connStr)
+    $conn.Open()
+    $tables = $conn.GetSchema("Tables")
+    $tableNames = $tables | Where-Object { $_["TABLE_TYPE"] -eq "TABLE" } | Select-Object -ExpandProperty TABLE_NAME
+    $conn.Close()
+    return $tableNames
+}
+
+# Function to extract data from a specific table in MS Access database
+function Extract-DataFromAccess {
+    param (
+        [string]$dbPath,
+        [string]$tableName
+    )
+    $connStr = "Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=$dbPath"
+    $conn = New-Object System.Data.Odbc.OdbcConnection($connStr)
+    $conn.Open()
+    $query = "SELECT * FROM [$tableName]"
+    $cmd = New-Object System.Data.Odbc.OdbcCommand($query, $conn)
+    $adapter = New-Object System.Data.Odbc.OdbcDataAdapter($cmd)
+    $dataSet = New-Object System.Data.DataSet
+    $adapter.Fill($dataSet)
+    $conn.Close()
+    return $dataSet.Tables
+}
+
+# Function to write data to SQL Server database
+function Write-DataToSQL {
+    param (
+        [System.Data.DataTable]$dataTable,
+        [string]$tableName,
+        [string]$sqlConnStr
+    )
+    $bulkCopy = New-Object Data.SqlClient.SqlBulkCopy($sqlConnStr)
+    $bulkCopy.DestinationTableName = $tableName
+    $bulkCopy.WriteToServer($dataTable)
+}
+
+# Function to traverse directories and find all Access databases
+function Find-AccessDatabases {
+    param (
+        [string]$folder
+    )
+    $accessDatabases = Get-ChildItem -Path $folder -Recurse -Filter *.accdb | Select-Object -ExpandProperty FullName
+    return $accessDatabases
+}
+
 # Example usage
 $dbFolder = "C:\AccessTest"
 $sqlConnStr = "Server=DESKTOP-VKMSDNG;Database=AccessStaging;Integrated Security=True;"
