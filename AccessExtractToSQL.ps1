@@ -20,7 +20,7 @@ for ($i = 0; $i -lt $totalDatabases; $i++) {
             }
             Write-DataToSQL -dataTable $data -tableName $tableName -sqlConnStr $sqlConnStr
         } catch {
-            Write-Output "Error processing table $tableName in database $dbPath: $_"
+            Write-Output ("Error processing table {0} in database {1}: {2}" -f $tableName, $dbPath, $_.Exception.Message)
         }
     }
 }
