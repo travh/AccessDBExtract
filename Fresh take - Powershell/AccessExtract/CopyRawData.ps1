@@ -1,68 +1,72 @@
-# Define the path to the MS Access database
-$accessDatabasePath = "C:\AccessTest\DB1\Database.accdb"
+# Define the root folder containing MS Access databases
+$accessRootFolder = "C:\AccessTest"  # Change this to your root folder
 
 # Define the connection string for SQL Server
 $sqlServerInstance = "DESKTOP-VKMSDNG"
 $sqlDatabaseName = "AccessStaging"
 $sqlConnectionString = "Server=$sqlServerInstance;Database=$sqlDatabaseName;Integrated Security=True;"
 
-# Create a new OleDbConnection object for MS Access
-$accessConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=$accessDatabasePath;"
-$accessConnection = New-Object System.Data.OleDb.OleDbConnection($accessConnectionString)
-
 # Create a new SqlConnection object for SQL Server
 $sqlConnection = New-Object System.Data.SqlClient.SqlConnection($sqlConnectionString)
-
-# Open the MS Access connection
-$accessConnection.Open()
-
-# Open the SQL Server connection
 $sqlConnection.Open()
 
-# Get the schema information for the tables in the MS Access database
-$accessTables = $accessConnection.GetSchema("Tables")
+# Get all Access database files in the root folder and subfolders
+$accessDatabaseFiles = Get-ChildItem -Path $accessRootFolder -Recurse -Filter "*.accdb"
 
-foreach ($accessTable in $accessTables.Rows) {
-    $tableName = $accessTable["TABLE_NAME"]
+foreach ($accessDatabase in $accessDatabaseFiles) {
+    Write-Output "Processing database: $($accessDatabase.FullName)"
     
-    # Skip system tables
-    if ($tableName -like "MSys*") {
-        continue
-    }
+    # Define the connection string for the current Access database
+    $accessConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=$($accessDatabase.FullName);"
+    $accessConnection = New-Object System.Data.OleDb.OleDbConnection($accessConnectionString)
+    $accessConnection.Open()
     
-    Write-Output "Copying data from $tableName..."
-    
-    # Read data from Access table
-    $selectQuery = "SELECT * FROM [$tableName]"
-    $accessCommand = New-Object System.Data.OleDb.OleDbCommand($selectQuery, $accessConnection)
-    $dataAdapter = New-Object System.Data.OleDb.OleDbDataAdapter($accessCommand)
-    $dataTable = New-Object System.Data.DataTable
-    $dataAdapter.Fill($dataTable) | Out-Null
-    
-    if ($dataTable.Rows.Count -eq 0) {
-        Write-Output "No data found in $tableName. Skipping..."
-        continue
-    }
-    
-    # Insert data into SQL Server
-    foreach ($row in $dataTable.Rows) {
-        $columnNames = ($dataTable.Columns | ForEach-Object { "[$($_.ColumnName)]" }) -join ", "
-        $values = ($dataTable.Columns | ForEach-Object { "'" + $row[$_.ColumnName].ToString().Replace("'", "''") + "'" }) -join ", "
-        
-        $insertQuery = "INSERT INTO [$tableName] ($columnNames) VALUES ($values)"
-        
-        try {
-            $sqlCommand = New-Object System.Data.SqlClient.SqlCommand($insertQuery, $sqlConnection)
-            $sqlCommand.ExecuteNonQuery() | Out-Null
-        } catch {
-            Write-Output "Error inserting into ${tableName}: $($_.Exception.Message)"
+    # Get the schema information for the tables in the MS Access database
+    $accessTables = $accessConnection.GetSchema("Tables")
 
+    foreach ($accessTable in $accessTables.Rows) {
+        $tableName = $accessTable["TABLE_NAME"]
+        
+        # Skip system tables
+        if ($tableName -like "MSys*") {
+            continue
         }
+        
+        Write-Output "Copying data from $tableName..."
+        
+        # Read data from Access table
+        $selectQuery = "SELECT * FROM [$tableName]"
+        $accessCommand = New-Object System.Data.OleDb.OleDbCommand($selectQuery, $accessConnection)
+        $dataAdapter = New-Object System.Data.OleDb.OleDbDataAdapter($accessCommand)
+        $dataTable = New-Object System.Data.DataTable
+        $dataAdapter.Fill($dataTable) | Out-Null
+        
+        if ($dataTable.Rows.Count -eq 0) {
+            Write-Output "No data found in $tableName. Skipping..."
+            continue
+        }
+        
+        # Insert data into SQL Server
+        foreach ($row in $dataTable.Rows) {
+            $columnNames = ($dataTable.Columns | ForEach-Object { "[$($_.ColumnName)]" }) -join ", "
+            $values = ($dataTable.Columns | ForEach-Object { "'" + $row[$_.ColumnName].ToString().Replace("'", "''") + "'" }) -join ", "
+            
+            $insertQuery = "INSERT INTO [$tableName] ($columnNames) VALUES ($values)"
+            
+            try {
+                $sqlCommand = New-Object System.Data.SqlClient.SqlCommand($insertQuery, $sqlConnection)
+                $sqlCommand.ExecuteNonQuery() | Out-Null
+            } catch {
+                Write-Output "Error inserting into ${tableName}: $($_.Exception.Message)"
+            }
+        }
+        
+        Write-Output "Data copied for $tableName."
     }
     
-    Write-Output "Data copied for $tableName."
+    # Close the Access connection
+    $accessConnection.Close()
 }
 
-# Close connections
-$accessConnection.Close()
+# Close SQL Server connection
 $sqlConnection.Close()
