@@ -102,7 +102,7 @@ foreach ($accessTable in $accessTables.Rows) {
     try {
         # Attempt to execute the CREATE TABLE SQL command
         $createTableCommand = New-Object System.Data.SqlClient.SqlCommand($createTableSql, $sqlConnection)
-        $createTableCommand.ExecuteNonQuery()
+        $createTableCommand.ExecuteNonQuery() | Out-Null
 
         Write-Output "Table $tableName created in SQL Server."
 
