@@ -1,5 +1,6 @@
 # Define the root folder containing MS Access databases
 $accessRootFolder = "C:\AccessTest"  # Change this to your root folder
+$accessDatabaseName = "database.accdb"  # Name of the Access database to match
 
 # Define the connection string for SQL Server
 $sqlServerInstance = "DESKTOP-VKMSDNG"
@@ -10,8 +11,8 @@ $sqlConnectionString = "Server=$sqlServerInstance;Database=$sqlDatabaseName;Inte
 $sqlConnection = New-Object System.Data.SqlClient.SqlConnection($sqlConnectionString)
 $sqlConnection.Open()
 
-# Get all Access database files in the root folder and subfolders
-$accessDatabaseFiles = Get-ChildItem -Path $accessRootFolder -Recurse -Filter "*.accdb"
+# Get all Access database files in the root folder and subfolders matching the specific database name
+$accessDatabaseFiles = Get-ChildItem -Path $accessRootFolder -Recurse | Where-Object { $_.Name -eq $accessDatabaseName }
 
 foreach ($accessDatabase in $accessDatabaseFiles) {
     $sourceFolderName = Split-Path -Path $accessDatabase.DirectoryName -Leaf
