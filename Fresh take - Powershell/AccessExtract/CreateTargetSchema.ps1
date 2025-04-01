@@ -96,6 +96,9 @@ foreach ($accessTable in $accessTables.Rows) {
         $columnDefinitions += "$delimitedColumnName $sqlServerDataType"
     }
 
+    # Add TempInvestigationID column
+    $columnDefinitions += "[TempInvestigationID] NVARCHAR(500)"
+
     # Combine all column definitions and add closing parenthesis
     $createTableSql += ($columnDefinitions -join ", ") + ")"
 

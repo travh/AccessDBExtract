@@ -14,7 +14,8 @@ $sqlConnection.Open()
 $accessDatabaseFiles = Get-ChildItem -Path $accessRootFolder -Recurse -Filter "*.accdb"
 
 foreach ($accessDatabase in $accessDatabaseFiles) {
-    Write-Output "Processing database: $($accessDatabase.FullName)"
+    $sourceFolderName = Split-Path -Path $accessDatabase.DirectoryName -Leaf
+    Write-Output "Processing database: $($accessDatabase.FullName) from folder: $sourceFolderName"
     
     # Define the connection string for the current Access database
     $accessConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=$($accessDatabase.FullName);"
@@ -50,6 +51,10 @@ foreach ($accessDatabase in $accessDatabaseFiles) {
         foreach ($row in $dataTable.Rows) {
             $columnNames = ($dataTable.Columns | ForEach-Object { "[$($_.ColumnName)]" }) -join ", "
             $values = ($dataTable.Columns | ForEach-Object { "'" + $row[$_.ColumnName].ToString().Replace("'", "''") + "'" }) -join ", "
+            
+            # Include TempInvestigationID column
+            $columnNames += ", [TempInvestigationID]"
+            $values += ", '$sourceFolderName'"
             
             $insertQuery = "INSERT INTO [$tableName] ($columnNames) VALUES ($values)"
             
